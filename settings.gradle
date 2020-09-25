@@ -1,0 +1,3 @@
+include ':DirectLineAPIs'
+include ':app'
+rootProject.name = "MicroSoftBotAndroidSDK"

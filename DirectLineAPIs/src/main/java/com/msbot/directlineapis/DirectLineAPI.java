@@ -1,10 +1,9 @@
 package com.msbot.directlineapis;
 
-import android.content.Context;
+import android.app.Application;
 import android.util.Log;
 
-import com.msbot.directlineapis.APIClient.SocketListener;
-import com.msbot.directlineapis.model.request.BotActivity;
+import com.msbot.directlineapis.model.request.ActivityRequest;
 import com.msbot.directlineapis.model.request.From;
 import com.msbot.directlineapis.model.response.StartConversationModel;
 import com.msbot.directlineapis.utils.SharedPreference;
@@ -16,6 +15,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import okhttp3.CacheControl;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.MediaType;
@@ -29,15 +29,13 @@ public class DirectLineAPI {
 
     private static final String TAG = "DirectLineAPI";
 
-    private static DirectLineAPI directLineAPI;
+    private static DirectLineAPI directLineAPI = null;
 
     private static final String BOT_BASE_URL = "https://directline.botframework.com/v3/directline/conversations/";
 
     private String SECRET_KEY;
-    private Context context;
 
     private OkHttpClient okHttpClient;
-    private OkHttpClient.Builder okHttpClientBuilder;
     private WebSocket ws;
     private Request request;
     public Moshi moshi;
@@ -47,75 +45,116 @@ public class DirectLineAPI {
 
     private BotListener botListener;
 
-    public static DirectLineAPI getInstance() {
+    public static synchronized DirectLineAPI getInstance() {
         if (directLineAPI == null)
             directLineAPI = new DirectLineAPI();
         return directLineAPI;
     }
 
-    public void start(Context context, String SECRET_KEY, BotListener botListener) {
+    public void start(Application application, String SECRET_KEY, BotListener botListener) {
 
         if (okHttpClient != null) return;
 
         this.botListener = botListener;
         this.SECRET_KEY = SECRET_KEY;
-        this.context = context;
 
         moshi = new Moshi.Builder().build();
+        SharedPreference.getInstance().setApplicationContext(application);
 
-        okHttpClientBuilder = new OkHttpClient.Builder()
+        OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(10, TimeUnit.SECONDS);
 
         okHttpClient = okHttpClientBuilder.build();
 
-
         startConversation();
+
     }
 
 
-    public void startConversation() {
-        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-        RequestBody body = RequestBody.create(JSON, "{}");
+    private void startConversation() {
+        /*
+         *   Check for conversation id exists, if its exist use the same or Create new .
+         * */
+        if (SharedPreference.getInstance().getConversationData() != null) {
+            /*
+             *   Start the webSockets to receive the messages from bot.
+             * */
+            startConversationModel = SharedPreference.getInstance().getConversationData();
+            assert startConversationModel != null;
+            receiveActivities(startConversationModel.getStreamUrl());
 
-        request = new Request.Builder()
-                .url(BOT_BASE_URL)
-                .post(body)
-                .addHeader("Authorization", "Bearer " + SECRET_KEY) //Notice this request has header, if you don't need remove this part.
-                .addHeader("Content-Type", "application/json") //Notice this request has header, if you don't need remove this part.
-                .build();
+        } else {
 
-        call = okHttpClient.newCall(request);
+            /*
+             *   Call service to get the Conversation ID, Token and WebSocket URL.
+             * */
 
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-                Log.e(TAG, "================= Start Conversation Failure  ==================");
-                Log.e(TAG, e.getMessage());
-            }
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(JSON, "{}");
 
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response.code() == 201) {
-                    startConversationModel = moshi.adapter(StartConversationModel.class)
-                            .fromJson(Objects.requireNonNull(response.body()).string());
+            request = new Request.Builder()
+                    .url(BOT_BASE_URL)
+                    .cacheControl(new CacheControl.Builder().noCache().build())
+                    .post(body)
+                    .addHeader("Authorization", "Bearer " + SECRET_KEY) //Notice this request has header, if you don't need remove this part.
+                    .addHeader("Content-Type", "application/json") //Notice this request has header, if you don't need remove this part.
+                    .build();
 
-                    if (startConversationModel != null) {
-                        SharedPreference.setData(context, startConversationModel);
-                        receiveActivities(startConversationModel.getStreamUrl());
+            call = okHttpClient.newCall(request);
+
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                    Log.e(TAG, "================= Start Conversation Failure  ==================");
+                    Log.e(TAG, Objects.requireNonNull(e.getMessage()));
+
+                }
+
+                @Override
+                public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                    /*
+                     *   Response Code 201 => Create new Conversation ID.
+                     * */
+                    if (response.code() == 201) {
+                        startConversationModel = moshi.adapter(StartConversationModel.class)
+                                .fromJson(Objects.requireNonNull(response.body()).string());
+
+                        if (startConversationModel != null) {
+                            /*
+                             *  Save the Start Conversation ID in sharedPreference.
+                             * */
+                            SharedPreference.getInstance().setConversationData(startConversationModel);
+                            receiveActivities(startConversationModel.getStreamUrl());
+                        }
+                    }else if(response.code() == 403){
+                        Log.e(TAG, "================= Start Conversation Failure  ==================");
+                        Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                     }
                 }
-            }
-        });
+            });
+
+        }
 
     }
 
-
+    /*
+    *   Reconnect the conversation if session expired.
+    * */
     public void reconnectConversation() {
 
+        String URL = BOT_BASE_URL + startConversationModel.getConversationId();
+
+        /*
+        *   Add WaterMark to ReconnectConversation, its Optional.
+        * */
+        if(!SharedPreference.getInstance().getWaterMarkData().isEmpty())
+            URL += "?watermark="+SharedPreference.getInstance().getWaterMarkData();
+
         request = new Request.Builder()
-                .url(BOT_BASE_URL + startConversationModel.getConversationId())
+                .url(URL)
+                .cacheControl(new CacheControl.Builder().noCache().build())
                 .get()
                 .addHeader("Authorization", "Bearer " + SECRET_KEY) //Notice this request has header, if you don't need remove this part.
                 .build();
@@ -135,25 +174,40 @@ public class DirectLineAPI {
                     startConversationModel = moshi.adapter(StartConversationModel.class)
                             .fromJson(Objects.requireNonNull(response.body()).string());
 
-                    assert startConversationModel != null;
-                    receiveActivities(startConversationModel.getStreamUrl());
+                    if (startConversationModel != null) {
+                        /*
+                         *  Update the Start Conversation ID in sharedPreference.
+                         * */
+                        SharedPreference.getInstance().setConversationData(startConversationModel);
+                        receiveActivities(startConversationModel.getStreamUrl());
+                    }
+                }else if(response.code() == 403){
+                    Log.e(TAG, "================= Reconnect Conversation Failure  ==================");
+                    Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                 }
             }
         });
 
     }
 
-
+    /*
+     *    WebSocket Listener start receive the bot messages.
+     * */
     private void receiveActivities(String webSocketURL) {
 
-        request = new Request.Builder().url(webSocketURL).build();
+        request = new Request.Builder()
+                .url(webSocketURL)
+                .cacheControl(new CacheControl.Builder().noCache().build())
+                .build();
         SocketListener listener = new SocketListener(botListener);
         ws = okHttpClient.newWebSocket(request, listener);
 //        okHttpClient.dispatcher().executorService().shutdown();
 
     }
 
-
+    /*
+    *   Send messages to bot.
+    * */
     public void sendActivity(String MSG) {
 
         if (startConversationModel == null) return;
@@ -161,22 +215,21 @@ public class DirectLineAPI {
         From from = new From();
         from.setId("User1");
 
-        BotActivity botActivity = new BotActivity();
+        ActivityRequest botActivity = new ActivityRequest();
         botActivity.setLocale("en-EN");
         botActivity.setType("message");
         botActivity.setFrom(from);
         botActivity.setText(MSG);
 
         MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-        RequestBody body = RequestBody.create(JSON, moshi.adapter(BotActivity.class).toJson(botActivity));
-        Log.i(TAG, moshi.adapter(BotActivity.class).toJson(botActivity));
-        Log.i(TAG, BOT_BASE_URL + startConversationModel.getConversationId() + "/activities");
+        RequestBody body = RequestBody.create(JSON, moshi.adapter(ActivityRequest.class).toJson(botActivity));
 
         Request request = new Request.Builder()
                 .url(BOT_BASE_URL + startConversationModel.getConversationId() + "/activities")
                 .addHeader("Authorization", "Bearer " + SECRET_KEY) //Notice this request has header, if you don't need remove this part.
                 .addHeader("Content-Type", "application/json") //Notice this request has header, if you don't need remove this part.
                 .post(body)
+                .cacheControl(new CacheControl.Builder().noCache().build())
                 .build();
 
         Call call = okHttpClient.newCall(request);
@@ -192,11 +245,19 @@ public class DirectLineAPI {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 if (response.code() == 200) {
+                }else if(response.code() == 403){
+                    Log.e(TAG, "================= Send Activity Failure  ==================");
+                    Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                 }
             }
         });
 
     }
 
+
+    private void destroy(){
+        ws.cancel();
+        okHttpClient.dispatcher().executorService().shutdown();
+    }
 
 }

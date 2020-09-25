@@ -1,10 +1,11 @@
-package com.msbot.directlineapis.APIClient;
+package com.msbot.directlineapis;
 
 import android.util.Log;
 
 import com.msbot.directlineapis.BotListener;
 import com.msbot.directlineapis.DirectLineAPI;
-import com.msbot.directlineapis.model.request.BotActivity;
+import com.msbot.directlineapis.model.response.BotActivity;
+import com.msbot.directlineapis.utils.SharedPreference;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +42,22 @@ public class SocketListener extends WebSocketListener {
         try {
             Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Message From Socket $$$$$$$$$$$$$$$$$$$$$");
             Log.d(TAG, text);
-            botListener.onResponse(DirectLineAPI.getInstance().moshi.adapter(BotActivity.class).fromJson(text));
+
+            if (!text.isEmpty()) {
+                /*
+                *   Send Response to user
+                * */
+                BotActivity botActivity = DirectLineAPI.getInstance().moshi.adapter(BotActivity.class).fromJson(text);
+                botListener.onResponse(botActivity);
+
+                /*
+                *   Set WaterMark in SharedPreference
+                * */
+                assert botActivity != null;
+                if(botActivity.getWatermark()!=null)
+                SharedPreference.getInstance().setWaterMarkData(botActivity.getWatermark());
+
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -55,9 +71,14 @@ public class SocketListener extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-        Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
-        Log.e(TAG, t.getMessage() + " - " + response);
-        botListener.onFailure();
+        assert response != null;
+        if(response.code() == 403){
+            DirectLineAPI.getInstance().reconnectConversation();
+        }else{
+            Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
+            Log.e(TAG, t.getMessage() + " - " + response);
+            botListener.onFailure();
+        }
     }
 }
 

@@ -2,7 +2,7 @@ package com.msbot.directlineapis.model.request;
 
 import com.squareup.moshi.Json;
 
-public class BotActivity {
+public class ActivityRequest {
 
     @Json(name = "locale")
     private String locale;
