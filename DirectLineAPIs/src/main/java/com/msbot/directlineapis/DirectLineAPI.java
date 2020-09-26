@@ -244,8 +244,8 @@ public class DirectLineAPI {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response.code() == 200) {
-                }else if(response.code() == 403){
+                if (response!=null && response.code() == 200) {
+                }else if(response!=null && response.code() == 403){
                     Log.e(TAG, "================= Send Activity Failure  ==================");
                     Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                 }

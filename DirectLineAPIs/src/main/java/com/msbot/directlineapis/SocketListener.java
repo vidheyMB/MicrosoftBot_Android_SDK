@@ -71,8 +71,8 @@ public class SocketListener extends WebSocketListener {
 
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-        assert response != null;
-        if(response.code() == 403){
+
+        if(response!=null && response.code() == 403){
             DirectLineAPI.getInstance().reconnectConversation();
         }else{
             Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
