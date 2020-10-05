@@ -41,6 +41,8 @@ public class DirectLineAPI {
     public Moshi moshi;
     private Call call;
 
+    private Boolean withWatermark = false;
+
     private StartConversationModel startConversationModel;
 
     private BotListener botListener;
@@ -139,6 +141,10 @@ public class DirectLineAPI {
 
     }
 
+    public void reconnectWithWatermark(Boolean withWatermark){
+         this.withWatermark = withWatermark;
+    }
+
     /*
     *   Reconnect the conversation if session expired.
     * */
@@ -149,7 +155,7 @@ public class DirectLineAPI {
         /*
         *   Add WaterMark to ReconnectConversation, its Optional.
         * */
-        if(!SharedPreference.getInstance().getWaterMarkData().isEmpty())
+        if(!SharedPreference.getInstance().getWaterMarkData().isEmpty() &&  withWatermark)
             URL += "?watermark="+SharedPreference.getInstance().getWaterMarkData();
 
         request = new Request.Builder()
