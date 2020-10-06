@@ -276,6 +276,8 @@ public class DirectLineAPI {
     public void destroy(){
         ws.cancel();
         okHttpClient.dispatcher().executorService().shutdown();
+
+        System.gc();
     }
 
 }
