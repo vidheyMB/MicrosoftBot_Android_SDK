@@ -20,14 +20,14 @@ public class SharedPreference {
 
     private static SharedPreferences.Editor editor;
     private static SharedPreferences prefs;
-    private Application context;
+    private Context context;
 
     public static synchronized SharedPreference getInstance() {
         if (sharedPreference == null) sharedPreference = new SharedPreference();
         return sharedPreference;
     }
 
-    public void setApplicationContext(Application contexts) {
+    public void setApplicationContext(Context contexts) {
         context = contexts;
     }
 
@@ -70,5 +70,12 @@ public class SharedPreference {
         prefs = null;
     }
 
+    public static void sharedPreferenceDestroy(){
+        sharedPreference = null;
+        editor = null;
+        prefs = null;
+
+        System.gc();
+    }
 
 }

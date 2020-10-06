@@ -1,6 +1,7 @@
 package com.msbot.directlineapis;
 
 import android.app.Application;
+import android.content.Context;
 import android.util.Log;
 
 import com.msbot.directlineapis.model.request.ActivityRequest;
@@ -53,7 +54,7 @@ public class DirectLineAPI {
         return directLineAPI;
     }
 
-    public void start(Application application, String SECRET_KEY, BotListener botListener) {
+    public void start(Context context, String SECRET_KEY, BotListener botListener) {
 
         if (okHttpClient != null) return;
 
@@ -61,7 +62,7 @@ public class DirectLineAPI {
         this.SECRET_KEY = SECRET_KEY;
 
         moshi = new Moshi.Builder().build();
-        SharedPreference.getInstance().setApplicationContext(application);
+        SharedPreference.getInstance().setApplicationContext(context);
 
         OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
@@ -276,6 +277,18 @@ public class DirectLineAPI {
     public void destroy(){
         ws.cancel();
         okHttpClient.dispatcher().executorService().shutdown();
+
+        directLineAPI = null;
+        SECRET_KEY = null;
+        okHttpClient = null;
+        ws = null;
+        request = null;
+        moshi = null;
+        call = null;
+        startConversationModel = null;
+        botListener = null;
+
+        SharedPreference.sharedPreferenceDestroy();
 
         System.gc();
     }
