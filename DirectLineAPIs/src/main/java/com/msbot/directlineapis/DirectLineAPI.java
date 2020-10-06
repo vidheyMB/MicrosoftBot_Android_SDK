@@ -141,6 +141,9 @@ public class DirectLineAPI {
 
     }
 
+    /*
+     *   Reconnect the conversation with or without WaterMark -> user optional.
+     * */
     public void reconnectWithWatermark(Boolean withWatermark){
          this.withWatermark = withWatermark;
     }
@@ -260,8 +263,17 @@ public class DirectLineAPI {
 
     }
 
+    /*
+     *   getConversation data exists or not.
+     * */
+    public boolean isConversationExists(){
+      return (SharedPreference.getInstance().getConversationData() != null);
+    }
 
-    private void destroy(){
+    /*
+     *   Destroy the instances after used.
+     * */
+    public void destroy(){
         ws.cancel();
         okHttpClient.dispatcher().executorService().shutdown();
     }
