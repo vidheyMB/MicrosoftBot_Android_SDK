@@ -1,7 +1,7 @@
 package com.msbot.directlineapis;
 
 
-import com.msbot.directlineapis.model.response2.BotActivity;
+import com.msbot.directlineapis.model.response.BotActivity;
 
 public interface BotListener {
     void onResponse(BotActivity botActivity);

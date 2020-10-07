@@ -2,10 +2,7 @@ package com.msbot.directlineapis;
 
 import android.util.Log;
 
-import com.msbot.directlineapis.BotListener;
-import com.msbot.directlineapis.DirectLineAPI;
-
-import com.msbot.directlineapis.model.response2.BotActivity;
+import com.msbot.directlineapis.model.response.BotActivity;
 import com.msbot.directlineapis.utils.SharedPreference;
 
 import org.jetbrains.annotations.NotNull;

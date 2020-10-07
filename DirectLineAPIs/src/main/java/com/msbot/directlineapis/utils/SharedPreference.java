@@ -1,11 +1,10 @@
 package com.msbot.directlineapis.utils;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import com.msbot.directlineapis.DirectLineAPI;
-import com.msbot.directlineapis.model.response.StartConversationModel;
+import com.msbot.directlineapis.model.StartConversationModel;
 
 import java.io.IOException;
 import java.util.Objects;

@@ -1,8 +1,8 @@
 package com.msbot.directlineapis.model.response;
 
-import com.squareup.moshi.Json;
-
 import java.util.List;
+
+import com.squareup.moshi.Json;
 
 public class Activity {
 
@@ -18,14 +18,18 @@ public class Activity {
     private From from;
     @Json(name = "conversation")
     private Conversation conversation;
+    @Json(name = "attachmentLayout")
+    private String attachmentLayout;
     @Json(name = "locale")
     private String locale;
     @Json(name = "text")
     private String text;
     @Json(name = "speak")
     private String speak;
+    @Json(name = "inputHint")
+    private String inputHint;
     @Json(name = "attachments")
-    private List<Object> attachments = null;
+    private List<Attachment> attachments = null;
     @Json(name = "entities")
     private List<Object> entities = null;
     @Json(name = "replyToId")
@@ -79,6 +83,14 @@ public class Activity {
         this.conversation = conversation;
     }
 
+    public String getAttachmentLayout() {
+        return attachmentLayout;
+    }
+
+    public void setAttachmentLayout(String attachmentLayout) {
+        this.attachmentLayout = attachmentLayout;
+    }
+
     public String getLocale() {
         return locale;
     }
@@ -103,11 +115,19 @@ public class Activity {
         this.speak = speak;
     }
 
-    public List<Object> getAttachments() {
+    public String getInputHint() {
+        return inputHint;
+    }
+
+    public void setInputHint(String inputHint) {
+        this.inputHint = inputHint;
+    }
+
+    public List<Attachment> getAttachments() {
         return attachments;
     }
 
-    public void setAttachments(List<Object> attachments) {
+    public void setAttachments(List<Attachment> attachments) {
         this.attachments = attachments;
     }
 

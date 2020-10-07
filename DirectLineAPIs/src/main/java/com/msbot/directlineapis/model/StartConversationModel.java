@@ -1,4 +1,4 @@
-package com.msbot.directlineapis.model.response;
+package com.msbot.directlineapis.model;
 
 import com.squareup.moshi.Json;
 

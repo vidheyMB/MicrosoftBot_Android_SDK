@@ -1,10 +1,10 @@
 package com.msbot.microsoftbotandroidsdk;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.msbot.directlineapis.BotListener;
 import com.msbot.directlineapis.DirectLineAPI;

@@ -1,12 +1,11 @@
 package com.msbot.directlineapis;
 
-import android.app.Application;
 import android.content.Context;
 import android.util.Log;
 
 import com.msbot.directlineapis.model.request.ActivityRequest;
 import com.msbot.directlineapis.model.request.From;
-import com.msbot.directlineapis.model.response.StartConversationModel;
+import com.msbot.directlineapis.model.StartConversationModel;
 import com.msbot.directlineapis.utils.SharedPreference;
 import com.squareup.moshi.Moshi;
 
