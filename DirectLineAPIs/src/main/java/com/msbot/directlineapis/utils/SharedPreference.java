@@ -11,7 +11,7 @@ import java.util.Objects;
 
 public class SharedPreference {
 
-    private static final String SharedPreferenceName = "AzureBotFramework";
+    private static final String SharedPreferenceName = "AzureBotFramework_Android_SDK";
     private static final String ConversationID = "ConversationID";
     private static final String WaterMark = "WaterMark";
 
