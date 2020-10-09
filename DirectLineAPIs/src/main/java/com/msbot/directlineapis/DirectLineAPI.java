@@ -257,6 +257,11 @@ public class DirectLineAPI {
                 }else if(response!=null && response.code() == 403){
                     Log.e(TAG, "================= Send Activity Failure  ==================");
                     Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
+                }else{
+                    Log.e(TAG, "================= Send Activity Failure  ==================");
+                    Log.e(TAG, "Status Code :" + response.code());
+                    Log.e(TAG, "description : Something went wrong.");
+
                 }
             }
         });
