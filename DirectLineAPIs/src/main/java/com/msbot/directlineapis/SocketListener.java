@@ -43,17 +43,17 @@ public class SocketListener extends WebSocketListener {
 
             if (!text.isEmpty()) {
                 /*
-                *   Send Response to user
-                * */
+                 *   Send Response to user
+                 * */
                 BotActivity botActivity = DirectLineAPI.getInstance().moshi.adapter(BotActivity.class).fromJson(text);
                 botListener.onResponse(botActivity);
 
                 /*
-                *   Set WaterMark in SharedPreference
-                * */
+                 *   Set WaterMark in SharedPreference
+                 * */
                 assert botActivity != null;
-                if(botActivity.getWatermark()!=null)
-                SharedPreference.getInstance().setWaterMarkData(botActivity.getWatermark());
+                if (botActivity.getWatermark() != null)
+                    SharedPreference.getInstance().setWaterMarkData(botActivity.getWatermark());
 
             }
         } catch (IOException e) {
@@ -70,11 +70,15 @@ public class SocketListener extends WebSocketListener {
     @Override
     public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
 
-        if(response!=null && response.code() == 403){
+        if (response != null && response.code() == 403) {
             DirectLineAPI.getInstance().reconnectConversation();
-        }else{
-            Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
-            Log.e(TAG, t.getMessage() + " - " + response);
+        } else {
+            if (response == null)
+                Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Socket Closed $$$$$$$$$$$$$$$$$$$$$");
+            else {
+                Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
+                Log.e(TAG, t.getMessage() + " - " + response);
+            }
             botListener.onFailure();
         }
     }

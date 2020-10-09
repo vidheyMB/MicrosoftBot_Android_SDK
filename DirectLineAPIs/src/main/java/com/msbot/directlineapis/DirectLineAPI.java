@@ -267,7 +267,7 @@ public class DirectLineAPI {
      *   getConversation data exists or not.
      * */
     public boolean isConversationExists(){
-      return (SharedPreference.getInstance().getConversationData() != null);
+      return (SharedPreference.getInstance().getConversationData() != null ? true : false);
     }
 
     /*
