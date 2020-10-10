@@ -27,15 +27,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        DirectLineAPI.getInstance().start(getApplication(),"r2N1NXc_Xtw.Y_Hu4zdjpNURVsSEDIS2IHcugNzM2VWK1J-QvwnyKuo", new BotListener() {
+        DirectLineAPI.getInstance().start(getApplication(),"asdfghjk", new BotListener() {
             @Override
-            public void onResponse(final BotActivity botActivity) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        textView.setText(botActivity.getActivities().get(0).getText()+"\n");
-                    }
-                });
+            public void onOpen() {
+                DirectLineAPI.getInstance().sendActivity("Hi");
+            }
+
+            @Override
+            public void onMessage(final BotActivity botActivity) {
+                textView.setText(botActivity.getActivities().get(0).getText()+"\n");
             }
 
             @Override

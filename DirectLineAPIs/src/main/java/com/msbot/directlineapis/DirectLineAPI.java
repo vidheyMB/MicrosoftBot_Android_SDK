@@ -62,6 +62,7 @@ public class DirectLineAPI {
 
         moshi = new Moshi.Builder().build();
         SharedPreference.getInstance().setApplicationContext(context);
+        SocketListener.getInstance().setMainHandler(context);
 
         OkHttpClient.Builder okHttpClientBuilder = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
@@ -208,7 +209,8 @@ public class DirectLineAPI {
                 .url(webSocketURL)
                 .cacheControl(new CacheControl.Builder().noCache().build())
                 .build();
-        SocketListener listener = new SocketListener(botListener);
+        SocketListener listener = SocketListener.getInstance();
+        listener.setBotListener(botListener);
         ws = okHttpClient.newWebSocket(request, listener);
 //        okHttpClient.dispatcher().executorService().shutdown();
 

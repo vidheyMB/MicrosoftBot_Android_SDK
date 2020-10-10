@@ -1,7 +1,10 @@
 package com.msbot.directlineapis;
 
+import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
+import com.msbot.directlineapis.model.response.Activity;
 import com.msbot.directlineapis.model.response.BotActivity;
 import com.msbot.directlineapis.utils.SharedPreference;
 
@@ -20,19 +23,38 @@ public class SocketListener extends WebSocketListener {
 
     private static final String TAG = "SocketListener";
     private static final int NORMAL_CLOSURE_STATUS = 1000;
-    BotListener botListener;
 
-    public SocketListener(BotListener botListener) {
+    private static SocketListener socketListener;
+
+    private Handler mainHandler;
+
+    private BotListener botListener;
+    private BotActivity botActivity;
+
+
+    public static SocketListener getInstance() {
+        if (socketListener == null) socketListener = new SocketListener();
+        return socketListener;
+    }
+
+    public void setMainHandler(Context context) {
+        if (mainHandler == null)
+            mainHandler = new Handler(context.getMainLooper());
+    }
+
+    public void setBotListener(BotListener botListener) {
         this.botListener = botListener;
     }
 
     @Override
     public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
         Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Open Socket $$$$$$$$$$$$$$$$$$$$$$$$");
-//        webSocket.send("Hello, it's SSaurel !");
-//        webSocket.send("What's up ?");
-//        webSocket.send(ByteString.decodeHex("deadbeef"));
-//        webSocket.close(NORMAL_CLOSURE_STATUS, "Goodbye !");
+        mainHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                botListener.onOpen();
+            }
+        });
     }
 
     @Override
@@ -45,8 +67,16 @@ public class SocketListener extends WebSocketListener {
                 /*
                  *   Send Response to user
                  * */
-                BotActivity botActivity = DirectLineAPI.getInstance().moshi.adapter(BotActivity.class).fromJson(text);
-                botListener.onResponse(botActivity);
+                botActivity = DirectLineAPI.getInstance().moshi.adapter(BotActivity.class).fromJson(text);
+
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        botListener.onMessage(botActivity);
+                    }
+                });
+
+
 
                 /*
                  *   Set WaterMark in SharedPreference
@@ -79,7 +109,14 @@ public class SocketListener extends WebSocketListener {
                 Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
                 Log.e(TAG, t.getMessage() + " - " + response);
             }
-            botListener.onFailure();
+
+            mainHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    botListener.onFailure();
+                }
+            });
+
         }
     }
 }
