@@ -29,8 +29,6 @@ public class SocketListener extends WebSocketListener {
     private Handler mainHandler;
 
     private BotListener botListener;
-    private BotActivity botActivity;
-
 
     public static SocketListener getInstance() {
         if (socketListener == null) socketListener = new SocketListener();
@@ -59,6 +57,7 @@ public class SocketListener extends WebSocketListener {
 
     @Override
     public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
+        final BotActivity botActivity;
         try {
             Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Message From Socket $$$$$$$$$$$$$$$$$$$$$");
             Log.d(TAG, text);
