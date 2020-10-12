@@ -227,7 +227,7 @@ public class DirectLineAPI {
         from.setId("User1");
 
         ActivityRequest botActivity = new ActivityRequest();
-        botActivity.setLocale("en-EN");
+        botActivity.setLocale("en-US");
         botActivity.setType("message");
         botActivity.setFrom(from);
         botActivity.setText(MSG);
