@@ -42,6 +42,8 @@ public class DirectLineAPI {
     private Call call;
 
     private Boolean withWatermark = false;
+    private Boolean KeepConversationSame = false;
+    private String FromUser;
 
     private StartConversationModel startConversationModel;
 
@@ -53,12 +55,15 @@ public class DirectLineAPI {
         return directLineAPI;
     }
 
-    public void start(Context context, String SECRET_KEY, BotListener botListener) {
+    public void start(Context context, String FromUser, String SECRET_KEY, Boolean KeepConversationSame, Boolean withWatermark, BotListener botListener) {
 
         if (okHttpClient != null) return;
 
         this.botListener = botListener;
         this.SECRET_KEY = SECRET_KEY;
+        this.KeepConversationSame = KeepConversationSame;
+        this.withWatermark = withWatermark;
+        this.FromUser = (FromUser == null ? "User1" : FromUser);
 
         moshi = new Moshi.Builder().build();
         SharedPreference.getInstance().setApplicationContext(context);
@@ -71,16 +76,16 @@ public class DirectLineAPI {
 
         okHttpClient = okHttpClientBuilder.build();
 
-        startConversation();
+        startConversation(this.KeepConversationSame);
 
     }
 
 
-    private void startConversation() {
+    private void startConversation(Boolean KeepConversationSame) {
         /*
          *   Check for conversation id exists, if its exist use the same or Create new .
          * */
-        if (SharedPreference.getInstance().getConversationData() != null) {
+        if (SharedPreference.getInstance().getConversationData() != null && KeepConversationSame) {
             /*
              *   Start the webSockets to receive the messages from bot.
              * */
@@ -131,7 +136,7 @@ public class DirectLineAPI {
                             SharedPreference.getInstance().setConversationData(startConversationModel);
                             receiveActivities(startConversationModel.getStreamUrl());
                         }
-                    }else if(response.code() == 403){
+                    } else if (response.code() == 403) {
                         Log.e(TAG, "================= Start Conversation Failure  ==================");
                         Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                     }
@@ -143,24 +148,75 @@ public class DirectLineAPI {
     }
 
     /*
-     *   Reconnect the conversation with or without WaterMark -> user optional.
+     * End of Conversation
      * */
-    public void reconnectWithWatermark(Boolean withWatermark){
-         this.withWatermark = withWatermark;
+    private void endConversation() {
+
+        if (startConversationModel == null) return;
+
+        MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+        RequestBody body = RequestBody.create(JSON,
+                "{\n" +
+                        "    \"type\": \"endOfConversation\",\n" +
+                        "    \"from\": {\n" +
+                        "        \"id\": " + FromUser + "\n" +
+                        "    }\n" +
+                        "}");
+
+        request = new Request.Builder()
+                .url(BOT_BASE_URL + startConversationModel.getConversationId() + "/activities")
+                .cacheControl(new CacheControl.Builder().noCache().build())
+                .post(body)
+                .addHeader("Authorization", "Bearer " + SECRET_KEY) //Notice this request has header, if you don't need remove this part.
+                .addHeader("Content-Type", "application/json") //Notice this request has header, if you don't need remove this part.
+                .build();
+
+        call = okHttpClient.newCall(request);
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                Log.e(TAG, "================= End of Conversation Failure  ==================");
+                Log.e(TAG, Objects.requireNonNull(e.getMessage()));
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                /*
+                 *   Response Code 200 => End of Conversation.
+                 * */
+                if (response.code() == 200) {
+                    Log.e(TAG, "================= End of Conversation  ==================");
+                } else {
+                    Log.e(TAG, "================= End of Conversation Failure  ==================");
+                }
+
+                onDestroy();
+            }
+        });
+
     }
 
     /*
-    *   Reconnect the conversation if session expired.
-    * */
+     *   Reconnect the conversation with or without WaterMark -> user optional.
+     * */
+   /* public void reconnectWithWatermark(Boolean withWatermark) {
+        this.withWatermark = withWatermark;
+    }*/
+
+    /*
+     *   Reconnect the conversation if session expired.
+     * */
     public void reconnectConversation() {
 
         String URL = BOT_BASE_URL + startConversationModel.getConversationId();
 
         /*
-        *   Add WaterMark to ReconnectConversation, its Optional.
-        * */
-        if(!SharedPreference.getInstance().getWaterMarkData().isEmpty() &&  withWatermark)
-            URL += "?watermark="+SharedPreference.getInstance().getWaterMarkData();
+         *   Add WaterMark to ReconnectConversation, its Optional.
+         * */
+        if (!SharedPreference.getInstance().getWaterMarkData().isEmpty() && withWatermark)
+            URL += "?watermark=" + SharedPreference.getInstance().getWaterMarkData();
 
         request = new Request.Builder()
                 .url(URL)
@@ -191,7 +247,7 @@ public class DirectLineAPI {
                         SharedPreference.getInstance().setConversationData(startConversationModel);
                         receiveActivities(startConversationModel.getStreamUrl());
                     }
-                }else if(response.code() == 403){
+                } else if (response.code() == 403) {
                     Log.e(TAG, "================= Reconnect Conversation Failure  ==================");
                     Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
                 }
@@ -217,14 +273,14 @@ public class DirectLineAPI {
     }
 
     /*
-    *   Send messages to bot.
-    * */
+     *   Send messages to bot.
+     * */
     public void sendActivity(String MSG) {
 
         if (startConversationModel == null) return;
 
         From from = new From();
-        from.setId("User1");
+        from.setId(FromUser);
 
         ActivityRequest botActivity = new ActivityRequest();
         botActivity.setLocale("en-US");
@@ -255,11 +311,11 @@ public class DirectLineAPI {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                if (response!=null && response.code() == 200) {
-                }else if(response!=null && response.code() == 403){
+                if (response != null && response.code() == 200) {
+                } else if (response != null && response.code() == 403) {
                     Log.e(TAG, "================= Send Activity Failure  ==================");
                     Log.e(TAG, "description : You are forbidden from performing this action because your token or secret is invalid.");
-                }else{
+                } else {
                     Log.e(TAG, "================= Send Activity Failure  ==================");
                     Log.e(TAG, "Status Code :" + response.code());
                     Log.e(TAG, "description : Something went wrong.");
@@ -273,14 +329,29 @@ public class DirectLineAPI {
     /*
      *   getConversation data exists or not.
      * */
-    public boolean isConversationExists(){
-      return (SharedPreference.getInstance().getConversationData() != null ? true : false);
+    public boolean isConversationExists() {
+        if (this.KeepConversationSame) {
+            return (SharedPreference.getInstance().getConversationData() != null ? true : false);
+        } else {
+            return false;
+        }
     }
 
     /*
      *   Destroy the instances after used.
      * */
-    public void destroy(){
+    public void destroy() {
+
+        if (!KeepConversationSame) {
+            endConversation();
+        } else {
+            onDestroy();
+        }
+
+
+    }
+
+    private void onDestroy() {
         ws.cancel();
         okHttpClient.dispatcher().executorService().shutdown();
 

@@ -28,6 +28,8 @@ public class Activity {
     private String speak;
     @Json(name = "inputHint")
     private String inputHint;
+    @Json(name = "suggestedActions")
+    private SuggestedActions suggestedActions;
     @Json(name = "attachments")
     private List<Attachment> attachments = null;
     @Json(name = "entities")
