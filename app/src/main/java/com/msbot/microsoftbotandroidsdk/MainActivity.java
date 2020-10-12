@@ -27,22 +27,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        DirectLineAPI.getInstance().start(getApplication(),"asdfghjk", new BotListener() {
-            @Override
-            public void onOpen() {
-                DirectLineAPI.getInstance().sendActivity("Hi");
-            }
+        DirectLineAPI.getInstance().start(getApplication(),
+                "1234567890",
+                "asdasdasd",
+                false,
+                false,
+                new BotListener() {
+                    @Override
+                    public void onOpen() {
+                        DirectLineAPI.getInstance().sendActivity("Hi");
+                    }
 
-            @Override
-            public void onMessage(final BotActivity botActivity) {
-                textView.setText(botActivity.getActivities().get(0).getText()+"\n");
-            }
+                    @Override
+                    public void onMessage(final BotActivity botActivity) {
+                        textView.setText(botActivity.getActivities().get(0).getText() + "\n");
+                    }
 
-            @Override
-            public void onFailure() {
+                    @Override
+                    public void onFailure() {
 
-            }
-        });
+                    }
+                });
 
 
     }

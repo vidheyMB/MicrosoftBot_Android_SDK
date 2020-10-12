@@ -37,6 +37,14 @@ public class Activity {
     @Json(name = "replyToId")
     private String replyToId;
 
+    public SuggestedActions getSuggestedActions() {
+        return suggestedActions;
+    }
+
+    public void setSuggestedActions(SuggestedActions suggestedActions) {
+        this.suggestedActions = suggestedActions;
+    }
+
     public String getType() {
         return type;
     }
