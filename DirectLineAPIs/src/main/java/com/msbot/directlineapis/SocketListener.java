@@ -104,10 +104,10 @@ public class SocketListener extends WebSocketListener {
         } else {
             if (response == null)
                 Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Socket Closed $$$$$$$$$$$$$$$$$$$$$");
-            else {
+            else
                 Log.e(TAG, "$$$$$$$$$$$$$$$$$$$$$ Failure Socket $$$$$$$$$$$$$$$$$$$$$");
-                Log.e(TAG, t.getMessage() + " - " + response);
-            }
+
+            Log.e(TAG, t.getMessage() + " - " + response);
 
             mainHandler.post(new Runnable() {
                 @Override
