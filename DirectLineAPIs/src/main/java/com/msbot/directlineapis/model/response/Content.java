@@ -19,13 +19,13 @@ public class Content {
     @Json(name = "lgtype")
     private String lgtype;
     @Json(name = "value")
-    private String value;
+    private Object value;
 
-    public String getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
