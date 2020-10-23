@@ -56,7 +56,7 @@ public class SocketListener extends WebSocketListener {
     }
 
     @Override
-    public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
+    public void onMessage(@NotNull WebSocket webSocket, @NotNull final String text) {
         final BotActivity botActivity;
         try {
             Log.d(TAG, "$$$$$$$$$$$$$$$$$$$$$ Message From Socket $$$$$$$$$$$$$$$$$$$$$");
@@ -71,7 +71,8 @@ public class SocketListener extends WebSocketListener {
                 mainHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        botListener.onMessage(botActivity);
+                        botListener.onMessageObject(botActivity);
+                        botListener.onMessageString(text);
                     }
                 });
 
