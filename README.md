@@ -2,6 +2,26 @@
 
 Microsoft ChatBot Api for conversation b/w user and bot can be made easy by this library. 
 
+## Installation
+
+```bash
+
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
+}
+
+```
+ 
+```bash
+
+dependencies {
+	        implementation 'com.github.vidheyMB:MicrosoftBot_Android_SDK:v0.1'
+	}
+
+```
+
 ## Usage
 1. Start the Bot Listener by below code.
 
